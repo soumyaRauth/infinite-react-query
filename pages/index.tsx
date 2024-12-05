@@ -1,22 +1,18 @@
 import PokemonList from "@/component/Pokemons";
 import { fetchAllPokemons } from "@/services/api";
 import { Pokemon } from "@/utils/type";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import {
+  useInfiniteQuery,
+  useSuspenseInfiniteQuery,
+} from "@tanstack/react-query";
+import { Suspense, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
-const PAGE_LIMIT: Readonly<number> = 10;
-export default function Home() {
-  const {
-    data,
-    isLoading,
-    error,
-    isFetching,
-    isPending,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["infiniteQuery"],
+const PAGE_LIMIT = 10;
+
+const HomePage = () => {
+  const { data, error, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
+    queryKey: ["infinitePost"],
     queryFn: ({ pageParam = 1 }) =>
       fetchAllPokemons({
         limit: PAGE_LIMIT,
@@ -26,27 +22,32 @@ export default function Home() {
     getNextPageParam: (
       lastPage: Pokemon.PokemonProps,
       allPages: Pokemon.PokemonProps[]
-    ) => {
+    ): number | undefined => {
       return lastPage.next ? allPages.length + 1 : undefined;
     },
   });
 
-  const { ref, inView } = useInView();
+  const { ref } = useInView({
+    onChange(inView, entry) {
+      if (inView) {
+        console.log("entry entry");
+        console.log(entry);
 
-  useEffect(() => {
-    if (inView) {
-      fetchNextPage();
-    }
-  }, [fetchNextPage, inView]);
+        fetchNextPage();
+      }
+    },
+  });
 
   return (
     <>
-      <div>
-        {data?.pages.map((page: Pokemon.PokemonProps) => (
-          <PokemonList data={page.results} />
-        ))}
-      </div>
-      <div ref={ref}></div>
+      {data?.pages.map((page: Pokemon.PokemonProps, index: number) => (
+        <PokemonList data={page.results} key={index} />
+      ))}
+
+      <p ref={ref} style={{ height: "1px" }}></p>
+      {isFetchingNextPage && "Loading..."}
     </>
   );
-}
+};
+
+export default HomePage;

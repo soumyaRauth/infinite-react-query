@@ -10,9 +10,6 @@ export type PokemonCollection = {
   data: Pokemon.SinglePokemon[];
 };
 const PokemonList = ({ data }: PokemonCollection) => {
-  console.log(`data is here: `);
-  console.log(data);
-
   return (
     <>
       <div className="container mx-auto p-6 space-y-6">
